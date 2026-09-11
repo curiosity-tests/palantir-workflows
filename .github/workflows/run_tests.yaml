@@ -1,4 +1,5 @@
 name: Tests
+run-name: "Tests ${{ inputs.leg || github.event_name }} ${{ inputs.racecar_run }}"
 on: 
   push:
     branches:
@@ -11,10 +12,24 @@ on:
       notes:
         description: 'Notes about this run'
         required: false
+      leg:
+        description: "baseline (uninstrumented) or instrumented (under chalk/curiosity)"
+        type: choice
+        options: [instrumented, baseline]
+        default: baseline
+      profile:
+        description: "CrashOverride chalk profile"
+        type: string
+        default: curiosity-tests-racecar
+      racecar_run:
+        description: "racecar correlation token, echoed into the run name"
+        type: string
+        default: ""
 concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: true
 env:
+  CHALK_ON: ${{ inputs.leg == 'instrumented' }}
   CROMWELL_VERSION: 91
   MINIWDL_VERSION: 1.13.1
 jobs:
@@ -93,6 +108,7 @@ jobs:
           path: cromwell_logs/
 
   python_lint:
+    if: false   # racecar: scan/report job, not a build
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
